@@ -1,19 +1,19 @@
 /*
     session_t.cpp
 
-    Implement and test the class Session
+    Test the class Session
 */
 
-#include <ctime>
 #include <cassert>
 #include <unistd.h>
+#include <chrono>
 
 class Session {
 public:
-    Session() : start_time(std::time(nullptr)) {}
-    int elapsed() { return std::time(nullptr) - start_time; }
+    Session() : start(std::chrono::system_clock::now()) {}
+    int elapsed() { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start).count(); }
 private:
-    std::time_t start_time;
+    std::chrono::system_clock::time_point start;
 };
 
 int main() {

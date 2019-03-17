@@ -1,85 +1,32 @@
 /*
-    session_t.cpp
-
-    Test the class Session
-*/
+ session_t.cpp
+ 
+ Test the class Session
+ */
 
 #include <ctime>
 #include <cassert>
 #include <unistd.h>
 
-class Clock {
-public:
-    virtual std::time_t start() const = 0;
-    virtual std::time_t now() const = 0;
-};
-
-class TimeClock : public Clock {
-public:
-    virtual std::time_t start() const { return now(); }
-    virtual std::time_t now() const { return std::time(nullptr); }
-};
-
-class TenMinuteClock : public Clock {
-public:
-    virtual std::time_t start() const { return 0; }
-    virtual std::time_t now() const { return 60 * 10; }
-};
-
-class ConfigurableClock : public Clock {
-public:
-    ConfigurableClock(std::time_t amount) : length(amount) {}
-    virtual std::time_t start() const { return 0; }
-    virtual std::time_t now() const { return length; }
-private:
-    std::time_t length;
-};
-
 class Session {
 public:
-    Session(const Clock& clock = TimeClock()) : clock(clock), start_time(clock.start()) {}
-    void stop() { end_time = clock.now(); }
+    Session() : start_time(std::time(nullptr)), end_time(0) {}
+    void stop() { end_time = std::time(nullptr); }
     std::time_t seconds() { return end_time - start_time; }
 private:
-    const Clock& clock;
     std::time_t start_time;
     std::time_t end_time;
 };
 
 int main() {
-
+    
     {
         Session s;
         sleep(2);
         s.stop();
-
+        
         assert(s.seconds() == 2);
     }
-
-    {
-        TimeClock c;
-        Session s(c);
-        sleep(2);
-        s.stop();
-
-        assert(s.seconds() == 2);
-    }
-
-    {
-        TenMinuteClock c;
-        Session s(c);
-        s.stop();
-
-        assert(s.seconds() == 60 * 10);
-    }
-
-    {
-        ConfigurableClock c(60 * 10);
-        Session s(c);
-        s.stop();
-
-        assert(s.seconds() == 60 * 10);
-    }
-
+    
     return 0;
 }

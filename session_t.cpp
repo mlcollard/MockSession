@@ -4,25 +4,81 @@
     Test the class Session
 */
 
+#include <ctime>
 #include <cassert>
 #include <unistd.h>
-#include <chrono>
+
+class Clock {
+public:
+    virtual std::time_t start() const = 0;
+    virtual std::time_t now() const = 0;
+};
+
+class TimeClock : public Clock {
+public:
+    virtual std::time_t start() const { return now(); }
+    virtual std::time_t now() const { return std::time(nullptr); }
+};
+
+class TenMinuteClock : public Clock {
+public:
+    virtual std::time_t start() const { return 0; }
+    virtual std::time_t now() const { return 60 * 10; }
+};
+
+class ConfigurableClock : public Clock {
+public:
+    ConfigurableClock(std::time_t amount) : length(amount) {}
+    virtual std::time_t start() const { return 0; }
+    virtual std::time_t now() const { return length; }
+private:
+    std::time_t length;
+};
 
 class Session {
 public:
-    Session() : start(std::chrono::system_clock::now()) {}
-    int elapsed() { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start).count(); }
+    Session(const Clock& clock = TimeClock()) : clock(clock), start_time(clock.start()) {}
+    void stop() { end_time = clock.now(); }
+    std::time_t seconds() { return end_time - start_time; }
 private:
-    std::chrono::system_clock::time_point start;
+    const Clock& clock;
+    std::time_t start_time;
+    std::time_t end_time;
 };
 
 int main() {
 
-    // 2-second session
     {
         Session s;
         sleep(2);
-        assert(s.elapsed() == 2);
+        s.stop();
+
+        assert(s.seconds() == 2);
+    }
+
+    {
+        TimeClock c;
+        Session s(c);
+        sleep(2);
+        s.stop();
+
+        assert(s.seconds() == 2);
+    }
+
+    {
+        TenMinuteClock c;
+        Session s(c);
+        s.stop();
+
+        assert(s.seconds() == 60 * 10);
+    }
+
+    {
+        ConfigurableClock c(60 * 10);
+        Session s(c);
+        s.stop();
+
+        assert(s.seconds() == 60 * 10);
     }
 
     return 0;
